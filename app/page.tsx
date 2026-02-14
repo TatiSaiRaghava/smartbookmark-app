@@ -8,6 +8,10 @@ export default function Home() {
   const [bookmarks, setBookmarks] = useState<any[]>([])
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editUrl, setEditUrl] = useState('')
+
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -51,6 +55,24 @@ export default function Home() {
   const deleteBookmark = async (id: string) => {
     await supabase.from('bookmarks').delete().eq('id', id)
   }
+  const startEdit = (bookmark: any) => {
+  setEditingId(bookmark.id)
+  setEditTitle(bookmark.title)
+  setEditUrl(bookmark.url)
+}
+
+const updateBookmark = async (id: string) => {
+  await supabase
+    .from('bookmarks')
+    .update({
+      title: editTitle,
+      url: editUrl
+    })
+    .eq('id', id)
+
+  setEditingId(null)
+}
+
 
   if (!user) {
     return (
