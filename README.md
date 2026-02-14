@@ -95,9 +95,36 @@ These should be configured in:
 
 ---
 
+## Challenges Faced & Solutions
+
+### 1. Google OAuth Redirect Issue
+Initially, login was failing after deployment.
+Solution: Added correct Site URL and Redirect URL in Supabase Authentication settings.
+
+### 2. Row Level Security Blocking Inserts
+Bookmarks were not inserting due to RLS restrictions.
+Solution: Created proper RLS policies using:
+auth.uid() = user_id
+for SELECT, INSERT and DELETE.
+
+### 3. Realtime Updates Not Working
+Changes were not reflecting in another tab.
+Solution: Enabled Realtime on the bookmarks table and used Supabase channel subscription.
+
+### 4. Environment Variables in Production
+Login failed on Vercel initially.
+Solution: Added all required Supabase environment variables in Vercel project settings.
+
+-----
+
 ## Installation & Setup
 
 1. Clone the repository
 
 ```bash
 https://github.com/TatiSaiRaghava/smartbookmark-app
+
+
+
+
+
