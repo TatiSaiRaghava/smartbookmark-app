@@ -4,20 +4,41 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
 export default function Home() {
-  const [user, setUser] = useState<any>(null)
-  const [bookmarks, setBookmarks] = useState<any[]>([])
+  const [user, setUser] = useState(null)
+  const [bookmarks, setBookmarks] = useState([])
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState (null)
   const [editTitle, setEditTitle] = useState('')
   const [editUrl, setEditUrl] = useState('')
 
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
-      if (data.user) fetchBookmarks(data.user.id)
-    })
+  supabase.auth.getUser().then(({ data }) => {
+    setUser(data.user)
+    if (data.user) fetchBookmarks(data.user.id)
+  })
+
+  const channel = supabase
+    .channel('realtime-bookmarks')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'bookmarks' },
+      () => {
+        if (user) fetchBookmarks(user.id)
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [user])
+
+  useEffect(() => {
+  if (!user) return
+
+  fetchBookmarks(user.id)
 
     const channel = supabase
       .channel('realtime-bookmarks')
@@ -33,14 +54,14 @@ export default function Home() {
     }
   }, [user])
 
-  const fetchBookmarks = async (userId: string) => {
+ const fetchBookmarks = async (userId) => {
     const { data } = await supabase
       .from('bookmarks')
       .select('*')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-
-    setBookmarks(data || [])
+      if (data){
+        setBookmarks(data)
+      }
   }
 
   const addBookmark = async () => {
@@ -52,16 +73,16 @@ export default function Home() {
     setUrl('')
   }
 
-  const deleteBookmark = async (id: string) => {
+  const deleteBookmark = async (id) => {
     await supabase.from('bookmarks').delete().eq('id', id)
   }
-  const startEdit = (bookmark: any) => {
+  const startEdit = (bookmark) => {
   setEditingId(bookmark.id)
   setEditTitle(bookmark.title)
   setEditUrl(bookmark.url)
 }
 
-const updateBookmark = async (id: string) => {
+const updateBookmark = async (id) => {
   await supabase
     .from('bookmarks')
     .update({
